@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="description" content="腰椎间盘退变分级演示页面：输入定量 MRI 参数，查看占位规则生成的分级结果。" />
+    <title>腰椎间盘退变分级 Demo</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <span class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>MRI · 结构化参数评估</span>
+        <h1><span class="title-icon" aria-hidden="true">🩻</span>腰椎间盘退变分级 <span class="title-suffix">Demo</span></h1>
+        <p>输入定量 MRI 结构化参数，查看 Pfirrmann 分级与多裂肌脂肪浸润分级。</p>
+        <p>当前使用<span class="accent-text">占位规则模型</span>，仅用于演示交互流程。</p>
+      </header>
+
+      <main class="main-grid">
+        <section class="column" aria-labelledby="input-title">
+          <h2 class="section-title" id="input-title"><span class="section-icon" aria-hidden="true">↗</span>输入参数</h2>
+
+          <form id="assessment-form" novalidate>
+            <div class="card parameters-card">
+              <div class="parameter" data-parameter="t2">
+                <div class="parameter-top">
+                  <label for="t2-number">髓核 T2 弛豫时间 <span class="unit">(ms)</span></label>
+                  <div class="parameter-actions">
+                    <input id="t2-number" type="number" inputmode="numeric" min="10" max="140" step="1" value="75" aria-label="髓核 T2 弛豫时间，毫秒" />
+                    <button class="reset-button" type="button" aria-label="重置髓核 T2 弛豫时间" title="重置为 75">↺</button>
+                  </div>
+                </div>
+                <div class="range-line"><span>10</span><input id="t2-range" type="range" min="10" max="140" step="1" value="75" aria-label="髓核 T2 弛豫时间滑块" /><span>140</span></div>
+              </div>
+
+              <div class="parameter" data-parameter="fat">
+                <div class="parameter-top">
+                  <label for="fat-number">椎间盘脂肪分数 <span class="unit">(%)</span></label>
+                  <div class="parameter-actions">
+                    <input id="fat-number" type="number" inputmode="decimal" min="0" max="40" step="0.5" value="6" aria-label="椎间盘脂肪分数，百分比" />
+                    <button class="reset-button" type="button" aria-label="重置椎间盘脂肪分数" title="重置为 6">↺</button>
+                  </div>
+                </div>
+                <div class="range-line"><span>0</span><input id="fat-range" type="range" min="0" max="40" step="0.5" value="6" aria-label="椎间盘脂肪分数滑块" /><span>40</span></div>
+              </div>
+
+              <div class="parameter" data-parameter="height">
+                <div class="parameter-top">
+                  <label for="height-number">椎间盘高度比 <span class="unit">(%)</span></label>
+                  <div class="parameter-actions">
+                    <input id="height-number" type="number" inputmode="numeric" min="10" max="100" step="1" value="65" aria-label="椎间盘高度比，百分比" />
+                    <button class="reset-button" type="button" aria-label="重置椎间盘高度比" title="重置为 65">↺</button>
+                  </div>
+                </div>
+                <div class="range-line"><span>10</span><input id="height-range" type="range" min="10" max="100" step="1" value="65" aria-label="椎间盘高度比滑块" /><span>100</span></div>
+              </div>
+
+              <div class="parameter" data-parameter="age">
+                <div class="parameter-top">
+                  <label for="age-number">年龄 <span class="unit">(岁)</span></label>
+                  <div class="parameter-actions">
+                    <input id="age-number" type="number" inputmode="numeric" min="18" max="90" step="1" value="45" aria-label="年龄，岁" />
+                    <button class="reset-button" type="button" aria-label="重置年龄" title="重置为 45">↺</button>
+                  </div>
+                </div>
+                <div class="range-line"><span>18</span><input id="age-range" type="range" min="18" max="90" step="1" value="45" aria-label="年龄滑块" /><span>90</span></div>
+              </div>
+
+              <div class="parameter" data-parameter="muscleFat">
+                <div class="parameter-top">
+                  <label for="muscleFat-number">多裂肌脂肪浸润 <span class="unit">(%)</span></label>
+                  <div class="parameter-actions">
+                    <input id="muscleFat-number" type="number" inputmode="numeric" min="0" max="100" step="1" value="15" aria-label="多裂肌脂肪浸润，百分比" />
+                    <button class="reset-button" type="button" aria-label="重置多裂肌脂肪浸润" title="重置为 15">↺</button>
+                  </div>
+                </div>
+                <div class="range-line"><span>0</span><input id="muscleFat-range" type="range" min="0" max="100" step="1" value="15" aria-label="多裂肌脂肪浸润滑块" /><span>100</span></div>
+              </div>
+            </div>
+
+            <button class="predict-button" type="submit">预测退变分级 <span aria-hidden="true">→</span></button>
+            <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+          </form>
+
+          <div class="examples">
+            <h3>示例数据 <span>点击填入参数</span></h3>
+            <div class="example-grid">
+              <button class="example-card" type="button" data-example="healthy"><span class="example-name">年轻健康</span><span class="example-values">110 · 3 · 80 · 25 · 5</span></button>
+              <button class="example-card" type="button" data-example="moderate"><span class="example-name">中度退变</span><span class="example-values">70 · 9 · 55 · 48 · 22</span></button>
+              <button class="example-card" type="button" data-example="severe"><span class="example-name">重度退变</span><span class="example-values">35 · 20 · 28 · 68 · 55</span></button>
+            </div>
+            <p class="example-note">示例数值顺序与上方五项参数一致。</p>
+          </div>
+        </section>
+
+        <section class="column" aria-labelledby="output-title">
+          <h2 class="section-title" id="output-title"><span class="section-icon" aria-hidden="true">▤</span>输出结果</h2>
+          <div class="card results-card" aria-live="polite">
+            <div class="confidence-header">
+              <span class="confidence-label">Pfirrmann 分级 <span>演示置信度</span></span>
+              <span class="confidence-caption">分级分布</span>
+            </div>
+            <div class="primary-grade" id="primary-grade">II</div>
+            <div class="confidence-list" id="confidence-list"></div>
+
+            <div class="report">
+              <h3><span aria-hidden="true">🩻</span>椎间盘退变评估结果</h3>
+              <p class="report-grade"><strong>Pfirrmann 分级：<span id="report-grade">I-II</span></strong><span class="report-score">（综合评分 <span id="report-score">1.5</span>）</span></p>
+              <p class="report-description" id="report-description">信号轻度不均，结构完整</p>
+              <hr />
+              <h4>共退变提示</h4>
+              <ul>
+                <li><strong>多裂肌脂肪浸润分级（Goutallier）：<span id="muscle-grade">1</span></strong> — <span id="muscle-description">少量脂肪条纹</span></li>
+                <li>椎间盘–多裂肌共退变趋势：<span id="trend">目前参数未同时提示明显退变</span></li>
+              </ul>
+              <div class="warning"><span aria-hidden="true">⚠</span><span>本结果由演示用占位规则生成，不构成临床诊断。</span></div>
+            </div>
+          </div>
+          <p class="privacy-note">参数仅在当前浏览器中计算，不会上传到服务器。</p>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
